@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  mysql-purchaseorder:
+    image: mysql:8.0
+    container_name: mysql-purchaseorder
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ${DB_NAME:-purchaseorderdb}
+      MYSQL_USER: ${DB_USER:-appuser}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-root}
+    ports:
+      - "${DB_PORT:-3307}:3306"
+    volumes:
+      - mysql_purchaseorder_data:/var/lib/mysql
+    networks:
+      - microservices-network
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  purchaseorder-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: purchaseorder-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SERVER_PORT: 8080
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-purchaseorder:3306/${DB_NAME:-purchaseorderdb}?allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: ${DB_USER:-appuser}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-root}
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+      SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.MySQLDialect
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    ports:
+      - "${SERVICE_PORT:-8083}:8080"
+    depends_on:
+      mysql-purchaseorder:
+        condition: service_healthy
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+networks:
+  microservices-network:
+    name: microservices-network
+    driver: bridge
+
+volumes:
+  mysql_purchaseorder_data:

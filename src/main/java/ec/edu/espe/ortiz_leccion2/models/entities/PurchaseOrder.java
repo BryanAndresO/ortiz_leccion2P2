@@ -1,5 +1,7 @@
 package ec.edu.espe.ortiz_leccion2.models.entities;
 
+import ec.edu.espe.ortiz_leccion2.models.enums.Currency;
+import ec.edu.espe.ortiz_leccion2.models.enums.OrderStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -25,18 +27,20 @@ public class PurchaseOrder {
     @Column(name = "supplier_name", length = 100, nullable = false)
     private String supplierName;
 
-    @NotBlank(message = "El status es obligatorio y no puede estar vacío")
+    @NotNull(message = "El status es obligatorio")
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 20, nullable = false)
-    private String status; // DRAFT | SUBMITTED | APPROVED | REJECTED | CANCELLED
+    private OrderStatus status;
 
     @NotNull(message = "El monto total es obligatorio")
     @Positive(message = "El monto total debe ser mayor a cero")
     @Column(name = "total_amount", precision = 10, scale = 2, nullable = false)
     private BigDecimal totalAmount;
 
-    @NotBlank(message = "La moneda es obligatoria y no puede estar vacía")
+    @NotNull(message = "La moneda es obligatoria")
+    @Enumerated(EnumType.STRING)
     @Column(name = "currency", length = 3, nullable = false)
-    private String currency; // USD | EUR
+    private Currency currency;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -77,11 +81,11 @@ public class PurchaseOrder {
         this.supplierName = supplierName;
     }
 
-    public String getStatus() {
+    public OrderStatus getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(OrderStatus status) {
         this.status = status;
     }
 
@@ -93,11 +97,11 @@ public class PurchaseOrder {
         this.totalAmount = totalAmount;
     }
 
-    public String getCurrency() {
+    public Currency getCurrency() {
         return currency;
     }
 
-    public void setCurrency(String currency) {
+    public void setCurrency(Currency currency) {
         this.currency = currency;
     }
 

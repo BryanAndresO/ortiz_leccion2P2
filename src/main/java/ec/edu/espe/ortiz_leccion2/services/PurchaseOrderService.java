@@ -1,11 +1,14 @@
 package ec.edu.espe.ortiz_leccion2.services;
 
+import ec.edu.espe.ortiz_leccion2.models.dto.PurchaseOrderFilterDTO;
 import ec.edu.espe.ortiz_leccion2.models.entities.PurchaseOrder;
 import java.util.List;
 
 public interface PurchaseOrderService {
 
     List<PurchaseOrder> findAll();
+
+    List<PurchaseOrder> findAllWithFilters(PurchaseOrderFilterDTO filters);
 
     PurchaseOrder findById(Long id);
 
