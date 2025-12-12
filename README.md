@@ -1,93 +1,132 @@
 # Microservicio Purchase Order - ortiz_leccion2
 
-## Resumen del Proyecto
+## Descripción del Sistema
 
-Microservicio RESTful para la gestión de órdenes de compra (Purchase Orders) desarrollado con **Spring Boot 3.4.0** y **Java 17**. Implementa operaciones CRUD completas con **filtros dinámicos avanzados**, validaciones robustas, manejo de excepciones personalizado y arquitectura dockerizada con **MySQL 8.0**.
+Microservicio RESTful desarrollado con Spring Boot 3.4.0 y Java 17 para la gestión integral de órdenes de compra (Purchase Orders). El sistema implementa operaciones CRUD completas con capacidades avanzadas de filtrado dinámico, validaciones robustas y manejo de excepciones personalizado. La arquitectura está completamente dockerizada utilizando MySQL 8.0 como motor de base de datos.
 
 ### Características Principales
 
 - API REST completa con endpoints GET, POST, PUT, DELETE
-- Sistema de filtros dinámicos (búsqueda de texto, status, currency, rangos de montos y fechas)
+- Sistema de filtros dinámicos: búsqueda de texto, status, currency, rangos de montos y fechas
 - Validaciones exhaustivas con mensajes de error descriptivos
-- Completamente dockerizado con MySQL y Docker Compose
-- Publicado en Docker Hub - Listo para desplegar
-- Arquitectura en capas (Controller, Service, Repository)
+- Arquitectura dockerizada con MySQL y Docker Compose
+- Imagen publicada en Docker Hub lista para despliegue
+- Arquitectura en capas: Controller, Service, Repository
 - Especificaciones JPA para consultas dinámicas
 - Red compartida de microservicios para comunicación inter-servicios
+- Manejo global de excepciones
 
 ---
 
-## PASOS PARA EJECUTAR
+## Requisitos del Entorno
 
-### Opción 1: Ejecutar con Docker (RECOMENDADO)
+### Para Ejecución con Docker (Recomendado)
+- Docker Desktop 20.10 o superior
+- Docker Compose 2.0 o superior
+- Sistema operativo: Windows 10/11, macOS, o Linux
+- Memoria RAM: Mínimo 4GB disponible
+- Espacio en disco: Mínimo 2GB disponible
 
-Esta es la forma más rápida y no requiere tener Java ni Maven instalados.
+### Para Ejecución Local (Desarrollo)
+- Java Development Kit (JDK) 17 o superior
+- Apache Maven 3.6 o superior
+- Variable de entorno JAVA_HOME configurada
+- Sistema operativo: Windows 10/11, macOS, o Linux
 
-#### Requisitos:
-- Docker Desktop instalado y corriendo
+### Puertos Requeridos
+- Puerto 8083: Aplicación Spring Boot (externo)
+- Puerto 3307: Base de datos MySQL (externo)
 
-#### Pasos:
+---
 
-**1. Clonar o descargar el repositorio**
+## Instrucciones para Construir la Imagen Docker
+
+### Construcción Manual
+
+1. Clonar el repositorio:
 ```bash
 git clone https://github.com/BryanAndresO/ortiz_leccion2P2.git
 cd ortiz_leccion2P2
 ```
 
-**2. Levantar los servicios con Docker Compose**
+2. Construir la imagen Docker:
+```bash
+docker build -t purchaseorder-service:latest .
+```
+
+3. Verificar la imagen creada:
+```bash
+docker images | grep purchaseorder-service
+```
+
+### Construcción con Docker Compose
+
+Construir todos los servicios definidos en docker-compose.yml:
+```bash
+docker-compose build
+```
+
+Construir y levantar los servicios simultáneamente:
+```bash
+docker-compose up --build -d
+```
+
+### Proceso de Construcción Multi-etapa
+
+El Dockerfile utiliza una construcción multi-etapa para optimizar el tamaño de la imagen:
+
+**Etapa 1 - Build Stage:**
+- Imagen base: maven:3.9-eclipse-temurin-17
+- Descarga de dependencias Maven
+- Compilación del código fuente
+- Generación del archivo JAR ejecutable
+
+**Etapa 2 - Runtime Stage:**
+- Imagen base: eclipse-temurin:17-jre-alpine
+- Copia del JAR desde la etapa de construcción
+- Configuración de variables de entorno
+- Exposición del puerto 8080 (interno)
+
+---
+
+## Comando para Ejecutar el Contenedor
+
+### Opción 1: Ejecución con Docker Compose (Recomendado)
+
+Iniciar todos los servicios:
 ```bash
 docker-compose up -d
 ```
 
-**3. Verificar que los contenedores estén corriendo**
+Verificar el estado de los contenedores:
 ```bash
 docker-compose ps
 ```
 
-Deberías ver:
-- `mysql-purchaseorder` - Healthy
-- `purchaseorder-service` - Running
-
-**4. Probar el servicio**
-```bash
-# Listar órdenes (debería devolver array vacío inicialmente)
-curl http://localhost:8083/api/v1/purchase-orders
-
-# Crear una orden de prueba
-curl -X POST http://localhost:8083/api/v1/purchase-orders \
-  -H "Content-Type: application/json" \
-  -d '{
-    "orderNumber": "PO-2025-000001",
-    "supplierName": "ACME Tools",
-    "status": "DRAFT",
-    "totalAmount": 1500.50,
-    "currency": "USD",
-    "expectedDeliveryDate": "2025-02-15"
-  }'
-```
-
-**5. Ver logs (opcional)**
+Visualizar logs en tiempo real:
 ```bash
 docker-compose logs -f purchaseorder-service
 ```
 
-**6. Detener los servicios**
+Detener los servicios:
 ```bash
 docker-compose down
 ```
 
----
-
-### Opción 2: Usar imagen de Docker Hub (MÁS RÁPIDO)
-
-Si solo quieres probar el servicio sin clonar el repositorio:
-
-**1. Descargar y ejecutar directamente desde Docker Hub**
+Detener y eliminar volúmenes de datos:
 ```bash
-# Crear red de microservicios
-docker network create microservices-network
+docker-compose down -v
+```
 
-# Levantar MySQL
+### Opción 2: Ejecución Manual con Docker
+
+Crear la red de microservicios:
+```bash
+docker network create microservices-network
+```
+
+Ejecutar el contenedor MySQL:
+```bash
 docker run -d \
   --name mysql-purchaseorder \
   --network microservices-network \
@@ -97,11 +136,30 @@ docker run -d \
   -e MYSQL_PASSWORD=root \
   -p 3307:3306 \
   mysql:8.0
+```
 
-# Esperar 20 segundos para que MySQL inicie
-timeout 20
+Ejecutar el contenedor del microservicio:
+```bash
+docker run -d \
+  --name purchaseorder-service \
+  --network microservices-network \
+  -e SPRING_PROFILES_ACTIVE=docker \
+  -e SPRING_DATASOURCE_URL=jdbc:mysql://mysql-purchaseorder:3306/purchaseorderdb?allowPublicKeyRetrieval=true&useSSL=false \
+  -e SPRING_DATASOURCE_USERNAME=appuser \
+  -e SPRING_DATASOURCE_PASSWORD=root \
+  -p 8083:8080 \
+  purchaseorder-service:latest
+```
 
-# Levantar el microservicio
+### Opción 3: Ejecución desde Docker Hub
+
+Descargar la imagen:
+```bash
+docker pull jaco224/purchaseorder-service:latest
+```
+
+Ejecutar el contenedor:
+```bash
 docker run -d \
   --name purchaseorder-service \
   --network microservices-network \
@@ -113,124 +171,48 @@ docker run -d \
   jaco224/purchaseorder-service:latest
 ```
 
-**2. Probar el servicio**
+---
+
+## URL Base de la API
+
+### Endpoint Principal
+```
+http://localhost:8083/api/v1/purchase-orders
+```
+
+### Endpoints Disponibles
+
+| Método HTTP | Ruta | Descripción |
+|-------------|------|-------------|
+| POST | `/api/v1/purchase-orders` | Crear una nueva orden de compra |
+| GET | `/api/v1/purchase-orders` | Listar todas las órdenes con filtros opcionales |
+| GET | `/api/v1/purchase-orders/{id}` | Obtener una orden específica por ID |
+| PUT | `/api/v1/purchase-orders/{id}` | Actualizar una orden existente |
+| DELETE | `/api/v1/purchase-orders/{id}` | Eliminar una orden de compra |
+
+### Verificación del Servicio
+
+Verificar que el servicio está activo:
 ```bash
 curl http://localhost:8083/api/v1/purchase-orders
 ```
 
-**3. Detener y limpiar**
-```bash
-docker stop purchaseorder-service mysql-purchaseorder
-docker rm purchaseorder-service mysql-purchaseorder
+Respuesta esperada (lista vacía inicialmente):
+```json
+[]
 ```
 
 ---
 
-### Opción 3: Ejecutar localmente (Desarrollo)
+## Modelo de Datos
 
-#### Requisitos:
-- Java 17 o superior
-- Maven 3.6+
-
-#### Pasos:
-
-**1. Clonar el repositorio**
-```bash
-git clone https://github.com/BryanAndresO/ortiz_leccion2P2.git
-cd ortiz_leccion2P2
-```
-
-**2. Ejecutar con Maven (usa H2 en memoria)**
-```bash
-./mvnw spring-boot:run
-```
-
-**3. Acceder a la aplicación**
-- API: `http://localhost:8083/api/v1/purchase-orders`
-- Consola H2: `http://localhost:8083/h2-console`
-  - JDBC URL: `jdbc:h2:mem:purchaseorderdb`
-  - Username: `sa`
-  - Password: (vacío)
-
----
-
-## Endpoints Disponibles
-
-### Base URL: `http://localhost:8083/api/v1/purchase-orders`
-
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| **POST** | `/api/v1/purchase-orders` | Crear una nueva orden de compra |
-| **GET** | `/api/v1/purchase-orders` | Listar todas las órdenes (con filtros opcionales) |
-| **GET** | `/api/v1/purchase-orders/{id}` | Obtener una orden por ID |
-| **PUT** | `/api/v1/purchase-orders/{id}` | Actualizar una orden existente |
-| **DELETE** | `/api/v1/purchase-orders/{id}` | Eliminar una orden de compra |
-
----
-
-## Filtros Disponibles (GET)
-
-Todos los filtros son **opcionales** y se pueden combinar:
-
-### 1. Búsqueda de texto (q)
-Busca en `orderNumber` y `supplierName` (case-insensitive)
-```
-GET /api/v1/purchase-orders?q=acme
-```
-
-### 2. Filtro por status
-Valores: `DRAFT`, `SUBMITTED`, `APPROVED`, `REJECTED`, `CANCELLED`
-```
-GET /api/v1/purchase-orders?status=APPROVED
-```
-
-### 3. Filtro por currency
-Valores: `USD`, `EUR`
-```
-GET /api/v1/purchase-orders?currency=USD
-```
-
-### 4. Filtro por rango de montos
-```
-GET /api/v1/purchase-orders?minTotal=500&maxTotal=2000
-```
-
-### 5. Filtro por rango de fechas
-Formato: `yyyy-MM-ddTHH:mm:ss`
-```
-GET /api/v1/purchase-orders?from=2025-01-01T00:00:00&to=2025-06-30T23:59:59
-```
-
-### 6. Filtros combinados
-```
-GET /api/v1/purchase-orders?q=acme&status=APPROVED&currency=USD&minTotal=100&maxTotal=5000&from=2025-01-01T00:00:00&to=2025-06-30T23:59:59
-```
-
----
-
-## Reglas de Validación de Filtros
-
-### Validaciones automáticas:
-- **status inválido**: Retorna 400 Bad Request con mensaje de error
-- **currency inválido**: Retorna 400 Bad Request con mensaje de error
-- **from > to**: Retorna 400 Bad Request - "La fecha 'from' no puede ser posterior a la fecha 'to'"
-- **minTotal > maxTotal**: Retorna 400 Bad Request - "El monto mínimo no puede ser mayor que el monto máximo"
-- **minTotal < 0**: Retorna 400 Bad Request - "El monto mínimo debe ser mayor o igual a 0"
-- **maxTotal < 0**: Retorna 400 Bad Request - "El monto máximo debe ser mayor o igual a 0"
-
-### Comportamiento cuando no se envían filtros:
-- Si un filtro no se envía o viene vacío, no se aplica ese filtro
-- Si no se envía ningún filtro, retorna todas las órdenes
-
----
-
-## Modelo de Datos: PurchaseOrder
+### Entidad PurchaseOrder
 
 ```json
 {
   "id": 1,
   "orderNumber": "PO-2025-000123",
-  "supplierName": "ACME Tools",
+  "supplierName": "ACME Corporation",
   "status": "APPROVED",
   "totalAmount": 1500.50,
   "currency": "USD",
@@ -239,20 +221,74 @@ GET /api/v1/purchase-orders?q=acme&status=APPROVED&currency=USD&minTotal=100&max
 }
 ```
 
-### Validaciones de campos:
-- `orderNumber`: Obligatorio, único, no puede estar vacío
-- `supplierName`: Obligatorio, no puede estar vacío
-- `status`: Obligatorio (DRAFT | SUBMITTED | APPROVED | REJECTED | CANCELLED)
-- `totalAmount`: Obligatorio, debe ser mayor a 0
-- `currency`: Obligatorio (USD | EUR)
-- `createdAt`: Auto-generado (fecha y hora del sistema)
-- `expectedDeliveryDate`: Obligatorio
+### Validaciones de Campos
+
+- **orderNumber**: Obligatorio, único, no puede estar vacío
+- **supplierName**: Obligatorio, no puede estar vacío
+- **status**: Obligatorio (valores permitidos: DRAFT, SUBMITTED, APPROVED, REJECTED, CANCELLED)
+- **totalAmount**: Obligatorio, debe ser mayor a 0
+- **currency**: Obligatorio (valores permitidos: USD, EUR)
+- **createdAt**: Generado automáticamente por el sistema
+- **expectedDeliveryDate**: Obligatorio, formato ISO 8601
 
 ---
 
-## Ejemplos de Pruebas con cURL
+## Filtros Disponibles
 
-### Crear una orden
+### Parámetros de Consulta
+
+Todos los filtros son opcionales y pueden combinarse:
+
+**1. Búsqueda de texto (q)**
+```
+GET /api/v1/purchase-orders?q=acme
+```
+Busca en los campos orderNumber y supplierName (case-insensitive)
+
+**2. Filtro por estado (status)**
+```
+GET /api/v1/purchase-orders?status=APPROVED
+```
+Valores permitidos: DRAFT, SUBMITTED, APPROVED, REJECTED, CANCELLED
+
+**3. Filtro por moneda (currency)**
+```
+GET /api/v1/purchase-orders?currency=USD
+```
+Valores permitidos: USD, EUR
+
+**4. Filtro por rango de montos**
+```
+GET /api/v1/purchase-orders?minTotal=500&maxTotal=2000
+```
+
+**5. Filtro por rango de fechas**
+```
+GET /api/v1/purchase-orders?from=2025-01-01T00:00:00&to=2025-06-30T23:59:59
+```
+Formato: yyyy-MM-ddTHH:mm:ss
+
+**6. Filtros combinados**
+```
+GET /api/v1/purchase-orders?q=acme&status=APPROVED&currency=USD&minTotal=100&maxTotal=5000&from=2025-01-01T00:00:00&to=2025-06-30T23:59:59
+```
+
+### Validaciones de Filtros
+
+El sistema valida automáticamente:
+- Status inválido: Retorna 400 Bad Request
+- Currency inválido: Retorna 400 Bad Request
+- from > to: Retorna 400 Bad Request
+- minTotal > maxTotal: Retorna 400 Bad Request
+- minTotal < 0: Retorna 400 Bad Request
+- maxTotal < 0: Retorna 400 Bad Request
+
+---
+
+## Ejemplos de Uso
+
+### Crear una Orden de Compra
+
 ```bash
 curl -X POST http://localhost:8083/api/v1/purchase-orders \
   -H "Content-Type: application/json" \
@@ -266,22 +302,26 @@ curl -X POST http://localhost:8083/api/v1/purchase-orders \
   }'
 ```
 
-### Listar todas las órdenes
+### Listar Todas las Órdenes
+
 ```bash
 curl http://localhost:8083/api/v1/purchase-orders
 ```
 
-### Buscar órdenes de ACME aprobadas en USD
+### Buscar Órdenes Específicas
+
 ```bash
 curl "http://localhost:8083/api/v1/purchase-orders?q=acme&status=APPROVED&currency=USD"
 ```
 
-### Obtener orden por ID
+### Obtener Orden por ID
+
 ```bash
 curl http://localhost:8083/api/v1/purchase-orders/1
 ```
 
-### Actualizar una orden
+### Actualizar una Orden
+
 ```bash
 curl -X PUT http://localhost:8083/api/v1/purchase-orders/1 \
   -H "Content-Type: application/json" \
@@ -295,155 +335,192 @@ curl -X PUT http://localhost:8083/api/v1/purchase-orders/1 \
   }'
 ```
 
-### Eliminar una orden
+### Eliminar una Orden
+
 ```bash
 curl -X DELETE http://localhost:8083/api/v1/purchase-orders/1
 ```
 
 ---
 
-## Información de Docker
+## Arquitectura del Sistema
 
-### Imagen en Docker Hub
-```bash
-docker pull jaco224/purchaseorder-service:latest
-```
-
-### Tags disponibles:
-- `latest` - Última versión
-- `v1.0.0` - Versión 1.0.0
-
-### Servicios Docker Compose:
-
-| Servicio | Puerto | Descripción |
-|----------|--------|-------------|
-| `purchaseorder-service` | 8083:8080 | Microservicio Spring Boot |
-| `mysql-purchaseorder` | 3307:3306 | Base de datos MySQL 8.0 |
-
-### Acceso a MySQL:
-```
-Host: localhost
-Port: 3307
-Database: purchaseorderdb
-Username: appuser
-Password: root
-```
-
----
-
-## Arquitectura del Proyecto
+### Estructura del Proyecto
 
 ```
 ortiz_leccion2/
 ├── src/main/java/ec/edu/espe/ortiz_leccion2/
 │   ├── controllers/
-│   │   └── PurchaseOrderController.java       # Endpoints REST
+│   │   └── PurchaseOrderController.java       # Capa de presentación - Endpoints REST
 │   ├── services/
-│   │   ├── PurchaseOrderService.java          # Interface del servicio
-│   │   └── PurchaseOrderServiceImpl.java      # Lógica de negocio
+│   │   ├── PurchaseOrderService.java          # Interface de servicios
+│   │   └── PurchaseOrderServiceImpl.java      # Implementación de lógica de negocio
 │   ├── repositories/
-│   │   └── PurchaseOrderRepository.java       # Acceso a datos (JPA)
+│   │   └── PurchaseOrderRepository.java       # Capa de acceso a datos (JPA)
 │   ├── models/
 │   │   ├── entities/
 │   │   │   └── PurchaseOrder.java             # Entidad JPA
 │   │   ├── enums/
-│   │   │   ├── OrderStatus.java               # Enum de estados
-│   │   │   └── Currency.java                  # Enum de monedas
+│   │   │   ├── OrderStatus.java               # Enumeración de estados
+│   │   │   └── Currency.java                  # Enumeración de monedas
 │   │   └── dto/
-│   │       └── PurchaseOrderFilterDTO.java    # DTO para filtros
+│   │       └── PurchaseOrderFilterDTO.java    # Data Transfer Object para filtros
 │   ├── specifications/
-│   │   └── PurchaseOrderSpecification.java    # Consultas dinámicas
+│   │   └── PurchaseOrderSpecification.java    # Especificaciones JPA para consultas dinámicas
 │   ├── exceptions/
-│   │   ├── ValidationExceptionHandler.java    # Manejo de errores
-│   │   ├── InvalidFilterException.java
-│   │   └── ResourceNotFoundException.java
-│   └── OrtizLeccion2Application.java          # Clase principal
+│   │   ├── GlobalExceptionHandler.java        # Manejo global de excepciones
+│   │   ├── InvalidFilterException.java        # Excepción para filtros inválidos
+│   │   └── ResourceNotFoundException.java     # Excepción para recursos no encontrados
+│   └── OrtizLeccion2Application.java          # Clase principal de la aplicación
 ├── src/main/resources/
 │   ├── application.properties                 # Configuración base
 │   ├── application-local.properties           # Perfil local (H2)
 │   └── application-docker.properties          # Perfil Docker (MySQL)
-├── Dockerfile                                 # Construcción de imagen
+├── Dockerfile                                 # Definición de imagen Docker
 ├── docker-compose.yml                         # Orquestación de servicios
-├── pom.xml                                    # Dependencias Maven
-└── README.md                                  # Este archivo
+├── pom.xml                                    # Configuración de dependencias Maven
+└── README.md                                  # Documentación del proyecto
+```
+
+### Tecnologías y Dependencias
+
+- **Spring Boot 3.4.0**: Framework principal para desarrollo de aplicaciones Java
+- **Spring Data JPA**: Capa de persistencia y especificaciones dinámicas
+- **Spring Web**: Desarrollo de API REST
+- **Spring Validation**: Validaciones de datos
+- **MySQL 8.0**: Sistema de gestión de base de datos relacional (producción)
+- **H2 Database**: Base de datos en memoria (desarrollo y pruebas)
+- **Maven**: Gestión de dependencias y construcción del proyecto
+- **Docker**: Containerización de la aplicación
+- **Docker Compose**: Orquestación de múltiples contenedores
+- **Java 17**: Lenguaje de programación
+
+---
+
+## Configuración de Perfiles
+
+### Perfil Local (local)
+- Base de datos: H2 en memoria
+- Puerto: 8083
+- Consola H2: http://localhost:8083/h2-console
+- JDBC URL: jdbc:h2:mem:purchaseorderdb
+- Usuario: sa
+- Contraseña: (vacía)
+
+### Perfil Docker (docker)
+- Base de datos: MySQL 8.0
+- Host: mysql-purchaseorder
+- Puerto interno: 3306
+- Puerto externo: 3307
+- Base de datos: purchaseorderdb
+- Usuario: appuser
+- Contraseña: root
+
+---
+
+## Información de Docker
+
+### Servicios Docker Compose
+
+| Servicio | Imagen | Puerto | Descripción |
+|----------|--------|--------|-------------|
+| purchaseorder-service | purchaseorder-service:latest | 8083:8080 | Microservicio Spring Boot |
+| mysql-purchaseorder | mysql:8.0 | 3307:3306 | Base de datos MySQL |
+
+### Volúmenes
+
+- **mysql_purchaseorder_data**: Almacenamiento persistente de datos MySQL
+
+### Redes
+
+- **microservices-network**: Red bridge para comunicación entre microservicios
+
+### Imagen en Docker Hub
+
+Repositorio: `jaco224/purchaseorder-service`
+
+Tags disponibles:
+- `latest`: Última versión estable
+- `v1.0.0`: Versión 1.0.0
+
+Descargar imagen:
+```bash
+docker pull jaco224/purchaseorder-service:latest
 ```
 
 ---
 
-## Tecnologías Utilizadas
-
-- **Spring Boot 3.4.0** - Framework principal
-- **Spring Data JPA** - Persistencia y especificaciones
-- **Spring Web** - API REST
-- **Spring Validation** - Validaciones
-- **MySQL 8.0** - Base de datos (Docker)
-- **H2 Database** - Base de datos en memoria (local)
-- **Maven** - Gestión de dependencias
-- **Docker & Docker Compose** - Containerización
-- **Java 17** - Lenguaje de programación
-
----
-
-## Notas Importantes
-
-1. **Perfiles de Spring:**
-   - `local`: Usa H2 en memoria (desarrollo)
-   - `docker`: Usa MySQL (producción)
-
-2. **Puertos:**
-   - Aplicación: `8083` (externo) → `8080` (interno)
-   - MySQL: `3307` (externo) → `3306` (interno)
-
-3. **Persistencia:**
-   - Los datos de MySQL se guardan en un volumen Docker
-   - Para eliminar datos: `docker-compose down -v`
-
-4. **Healthcheck:**
-   - El servicio espera a que MySQL esté listo antes de iniciar
-
-5. **Red de microservicios:**
-   - Usa la red `microservices-network` para comunicación entre servicios
-
----
-
-## Troubleshooting
+## Resolución de Problemas
 
 ### El servicio no inicia
-```bash
-# Ver logs
-docker-compose logs -f purchaseorder-service
 
-# Verificar MySQL
+Verificar logs del servicio:
+```bash
+docker-compose logs -f purchaseorder-service
+```
+
+Verificar logs de MySQL:
+```bash
 docker-compose logs -f mysql-purchaseorder
 ```
 
-### Reiniciar desde cero
+### Reiniciar completamente el sistema
+
 ```bash
 docker-compose down -v
 docker-compose up --build -d
 ```
 
-### Puerto 8083 ya en uso
-```bash
-# Cambiar puerto en .env
-SERVICE_PORT=8084
+### Puerto 8083 en uso
 
-# O detener el proceso que usa el puerto (Windows)
+Modificar el archivo .env:
+```
+SERVICE_PORT=8084
+```
+
+O detener el proceso que utiliza el puerto (Windows):
+```bash
 netstat -ano | findstr :8083
 taskkill /PID <PID> /F
 ```
 
 ### Error de conexión a MySQL
+
+Verificar estado de salud de MySQL:
 ```bash
-# Verificar que MySQL esté healthy
 docker-compose ps
+```
 
-# Si no está healthy, revisar logs
+Revisar logs de MySQL:
+```bash
 docker-compose logs mysql-purchaseorder
+```
 
-# Reiniciar solo MySQL
+Reiniciar servicio MySQL:
+```bash
 docker-compose restart mysql-purchaseorder
 ```
+
+### Limpiar contenedores y volúmenes
+
+```bash
+docker-compose down -v
+docker system prune -a --volumes
+```
+
+---
+
+## Notas Técnicas
+
+1. **Healthcheck**: El servicio implementa un healthcheck que verifica la disponibilidad de MySQL antes de iniciar la aplicación.
+
+2. **Persistencia de Datos**: Los datos de MySQL se almacenan en un volumen Docker nombrado, garantizando la persistencia entre reinicios.
+
+3. **Variables de Entorno**: Todas las configuraciones sensibles se gestionan mediante variables de entorno definidas en docker-compose.yml.
+
+4. **Optimización de Memoria**: La JVM está configurada con límites de memoria (Xmx256m, Xms128m) para optimizar el uso de recursos.
+
+5. **Red de Microservicios**: Utiliza una red bridge compartida que permite la comunicación entre múltiples microservicios.
 
 ---
 
@@ -455,9 +532,10 @@ Aplicaciones Distribuidas - 2025
 
 ---
 
-## Recursos Adicionales
+## Referencias y Recursos
 
-- **Repositorio GitHub:** https://github.com/BryanAndresO/ortiz_leccion2P2
-- **Docker Hub:** https://hub.docker.com/r/jaco224/purchaseorder-service
-- **Documentación Spring Boot:** https://spring.io/projects/spring-boot
-- **Documentación Docker:** https://docs.docker.com/
+- Repositorio GitHub: https://github.com/BryanAndresO/ortiz_leccion2P2
+- Docker Hub: https://hub.docker.com/r/jaco224/purchaseorder-service
+- Documentación Spring Boot: https://spring.io/projects/spring-boot
+- Documentación Docker: https://docs.docker.com
+- Documentación MySQL: https://dev.mysql.com/doc
