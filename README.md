@@ -187,32 +187,6 @@ FRONTEND_PORT=3000
 GET /api/v1/purchase-orders?status=APPROVED&currency=USD&minTotal=100
 ```
 
-## 🛠️ Desarrollo Local
-
-### Backend
-
-```bash
-# Compilar
-mvn clean package
-
-# Ejecutar con perfil local (H2)
-mvn spring-boot:run -Dspring-boot.run.profiles=local
-```
-
-### Frontend
-
-```bash
-cd frontend
-
-# Instalar dependencias
-npm install
-
-# Ejecutar servidor de desarrollo
-npm run dev
-
-# Construir para producción
-npm run build
-```
 
 ## 🐳 Docker
 
@@ -268,21 +242,6 @@ curl -X POST http://localhost:8083/api/v1/purchase-orders \
 curl http://localhost:8083/api/v1/purchase-orders
 ```
 
-## 🔍 Resolución de Problemas
-
-### Error CORS
-
-Si encuentras errores de CORS, verifica que el backend tenga la configuración en `CorsConfig.java` y que esté corriendo en el puerto correcto.
-
-### Puerto en uso
-
-Si algún puerto está en uso, modifica el archivo `.env`:
-
-```env
-SERVICE_PORT=8084
-FRONTEND_PORT=3001
-DB_PORT=3308
-```
 
 ### Reiniciar completamente
 
@@ -327,8 +286,4 @@ Aplicaciones Distribuidas - 2025
 - [Frontend en Docker Hub](https://hub.docker.com/r/jaco224/purchaseorder-frontend)
 
 ---
-
-## 📄 Licencia
-
-Este proyecto fue desarrollado con fines académicos.
 
