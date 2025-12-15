@@ -51,7 +51,32 @@ Para eliminar también los volúmenes de datos:
 docker-compose down -v
 ```
 
-## 📁 Estructura del Proyecto
+## � Imágenes en Docker Hub
+
+Las imágenes del proyecto están disponibles públicamente en Docker Hub:
+
+### Backend API
+- **Repositorio**: `jaco224/purchaseorder-service:latest`
+- **URL**: https://hub.docker.com/r/jaco224/purchaseorder-service
+- **Tamaño**: ~360 MB
+
+### Frontend React
+- **Repositorio**: `jaco224/purchaseorder-frontend:latest`
+- **URL**: https://hub.docker.com/r/jaco224/purchaseorder-frontend
+- **Tamaño**: ~82 MB
+
+### Descargar y ejecutar desde Docker Hub
+
+```bash
+# Descargar imágenes
+docker pull jaco224/purchaseorder-service:latest
+docker pull jaco224/purchaseorder-frontend:latest
+
+# O simplemente ejecutar docker-compose (descarga automáticamente)
+docker-compose up -d
+```
+
+## �📁 Estructura del Proyecto
 
 ```
 ortiz_leccion2/
@@ -128,13 +153,16 @@ FRONTEND_PORT=3000
 
 ### Frontend
 
-- ✅ Dashboard con estadísticas
+- ✅ Dashboard con estadísticas en tiempo real
 - ✅ Lista de órdenes con tabla responsive
-- ✅ Formularios de creación y edición
-- ✅ Panel de filtros dinámicos
-- ✅ Interfaz completamente en español
+- ✅ Formularios de creación y edición con validación
+- ✅ Panel de filtros dinámicos (7 tipos de filtros)
+- ✅ **Interfaz completamente en español**
 - ✅ Diseño moderno con Material-UI
 - ✅ Notificaciones y mensajes de error
+- ✅ Navegación con React Router
+- ✅ Estados traducidos (Borrador, Enviada, Aprobada, Rechazada, Cancelada)
+- ✅ Responsive design (móvil, tablet, desktop)
 
 ## 📡 Endpoints de la API
 
@@ -287,15 +315,20 @@ docker-compose up --build -d
 
 ## 👨‍💻 Autor
 
-**Bryan Andrés Ortiz**  
+**Bryan Andres Ortiz Tomalo**  
 Universidad de las Fuerzas Armadas ESPE  
 Aplicaciones Distribuidas - 2025
+
+
+## 🔗 Enlaces
+
+- [Repositorio GitHub](https://github.com/BryanAndresO/ortiz_leccion2P2)
+- [Backend en Docker Hub](https://hub.docker.com/r/jaco224/purchaseorder-service)
+- [Frontend en Docker Hub](https://hub.docker.com/r/jaco224/purchaseorder-frontend)
+
+---
 
 ## 📄 Licencia
 
 Este proyecto fue desarrollado con fines académicos.
 
-## 🔗 Enlaces
-
-- [Repositorio GitHub](https://github.com/BryanAndresO/ortiz_leccion2P2)
-- [Docker Hub](https://hub.docker.com/r/jaco224/purchaseorder-service)
